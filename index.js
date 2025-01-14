@@ -29,6 +29,15 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
 
+        const userCollection = client.db('HealthRexStore').collection('users')
+
+        //manage user------------------
+        app.post('/users', async (req, res) => {
+            const userInfo = req.body;
+            const result = await userCollection.insertOne(userInfo)
+            res.send(result)
+        })
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
