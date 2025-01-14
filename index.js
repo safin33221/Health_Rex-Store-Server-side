@@ -69,6 +69,11 @@ async function run() {
             const result = await medicinesCollection.find().toArray()
             res.send(result)
         })
+        app.post('/medicines', async (req, res) => {
+            const medicineInfo = req.body;
+            const result = await medicinesCollection.insertOne(medicineInfo)
+            res.send(result)
+        })
 
 
         // Send a ping to confirm a successful connection
