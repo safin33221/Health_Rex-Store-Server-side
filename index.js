@@ -29,7 +29,14 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
 
+
+        //--------------------All Collection -------------------
         const userCollection = client.db('HealthRexStore').collection('users')
+        const medicinesCollection = client.db('HealthRexStore').collection('medicines')
+
+
+
+
 
         //manage user------------------
         app.post('/users', async (req, res) => {
@@ -53,6 +60,14 @@ async function run() {
             }
             res.send({ seller })
 
+        })
+
+
+
+        //-------------------Manage Medicines------------------
+        app.get('/medicines', async (req, res) => {
+            const result = await medicinesCollection.find().toArray()
+            res.send(result)
         })
 
 
