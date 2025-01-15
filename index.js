@@ -33,6 +33,7 @@ async function run() {
         //--------------------All Collection -------------------
         const userCollection = client.db('HealthRexStore').collection('users')
         const medicinesCollection = client.db('HealthRexStore').collection('medicines')
+        const AddsCollection = client.db('HealthRexStore').collection('adds')
 
 
 
@@ -97,6 +98,15 @@ async function run() {
         app.post('/medicines', async (req, res) => {
             const medicineInfo = req.body;
             const result = await medicinesCollection.insertOne(medicineInfo)
+            res.send(result)
+        })
+
+
+
+        //-----------------------Manage Adverticement-------------------
+        app.post('/askAddverticement', async (req, res) => {
+            const addInfo = req.body;
+            const result = await AddsCollection.insertOne(addInfo)
             res.send(result)
         })
 
