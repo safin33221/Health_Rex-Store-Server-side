@@ -49,6 +49,18 @@ async function run() {
         app.post('/users', async (req, res) => {
             const userInfo = req.body;
             const result = await userCollection.insertOne(userInfo)
+            res.send({ result })
+        })
+        app.patch('/user/role/:email', async (req, res) => {
+            const email = req.params.email;
+            const data = req.body;
+            const query = { email: email }
+            updateDoc = {
+                $set: {
+                    role: data.role
+                }
+            }
+            const result = await userCollection.updateOne(query, updateDoc)
             res.send(result)
         })
 
