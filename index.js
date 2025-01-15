@@ -38,7 +38,7 @@ async function run() {
 
 
 
-        //manage user------------------
+        //------------------Manage user------------------
         app.post('/users', async (req, res) => {
             const userInfo = req.body;
             const result = await userCollection.insertOne(userInfo)
@@ -47,18 +47,16 @@ async function run() {
 
 
 
-        //-----------------Manage Seller -----------------
-        app.get('/users/seller/:email', async (req, res) => {
+
+
+        //-----------------Manage Role -----------------
+        app.get('/user/role/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
 
             //find the user
-            const user = await userCollection.findOne(query)
-            let seller = false;
-            if (user) {
-                seller = user?.role === 'seller'
-            }
-            res.send({ seller })
+            const result = await userCollection.findOne(query)
+            res.send({ role: result?.role })
 
         })
 
