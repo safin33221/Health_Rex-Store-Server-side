@@ -39,6 +39,13 @@ async function run() {
 
 
         //------------------Manage user------------------
+        //get user from userCollection 
+        app.get('/users', async (req, res) => {
+            const result = await userCollection.find().toArray()
+            res.send(result)
+        })
+
+        //Stored user in usersCollection
         app.post('/users', async (req, res) => {
             const userInfo = req.body;
             const result = await userCollection.insertOne(userInfo)
