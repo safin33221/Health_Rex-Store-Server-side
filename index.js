@@ -113,12 +113,16 @@ async function run() {
             const result = await AddsCollection.find().toArray()
             res.send(result)
         })
+        app.get('/addvertise/success', async (req, res) => {
+            const result = await AddsCollection.find({status:'success'}).toArray()
+            res.send(result)
+        })
 
         app.patch('/askAddverticement/status', async (req, res) => {
-      
+
             const id = req.body.data._id;
             const status = req.body.status;
-            
+
             const query = { _id: new ObjectId(id) }
             const updateDoc = {
                 $set: {
