@@ -34,6 +34,7 @@ async function run() {
         const userCollection = client.db('HealthRexStore').collection('users')
         const medicinesCollection = client.db('HealthRexStore').collection('medicines')
         const AddsCollection = client.db('HealthRexStore').collection('adds')
+        const categoryCollection = client.db('HealthRexStore').collection('category')
 
 
 
@@ -69,7 +70,7 @@ async function run() {
 
 
 
-        //-----------------Manage Role -----------------
+        //-----------------Manage User Role -----------------
         app.get('/user/role/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
@@ -114,7 +115,14 @@ async function run() {
             res.send(result)
         })
         app.get('/addvertise/success', async (req, res) => {
-            const result = await AddsCollection.find({status:'success'}).toArray()
+            const result = await AddsCollection.find({ status: 'success' }).toArray()
+            res.send(result)
+        })
+        //get banner for login sellse
+        app.get('/seller/adds/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const result = await AddsCollection.find(query).toArray()
             res.send(result)
         })
 
@@ -132,6 +140,14 @@ async function run() {
             const result = await AddsCollection.updateOne(query, updateDoc)
             res.send(result)
         })
+
+
+        //---------------------Manage Catefory------------------
+        app.get('/category', async (req, res) => {
+            const result = await categoryCollection.find().toArray()
+            res.send(result)
+        })
+
 
 
 
