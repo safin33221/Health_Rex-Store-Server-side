@@ -109,6 +109,11 @@ async function run() {
             const result = await AddsCollection.insertOne(addInfo)
             res.send(result)
         })
+        app.get('/addvertisements', async (req, res) => {
+            const result = await AddsCollection.find().toArray()
+            res.send(result)
+        })
+        
 
 
         // Send a ping to confirm a successful connection
