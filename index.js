@@ -35,6 +35,7 @@ async function run() {
         const medicinesCollection = client.db('HealthRexStore').collection('medicines')
         const AddsCollection = client.db('HealthRexStore').collection('adds')
         const categoryCollection = client.db('HealthRexStore').collection('category')
+        const cartsCollection = client.db('HealthRexStore').collection('carts')
 
 
 
@@ -142,7 +143,7 @@ async function run() {
         })
 
 
-        //---------------------Manage Catefory------------------
+        //---------------------Manage Category------------------
         app.get('/category', async (req, res) => {
             const result = await categoryCollection.find().toArray()
             res.send(result)
@@ -158,6 +159,27 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await categoryCollection.deleteOne(query)
+            res.send(result)
+        })
+        app.patch('/category/:id', async (req, res) => {
+            const id = req.params.id
+            const data = req.body;
+            const query = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    name: data.name,
+                    image: data.image
+                }
+            }
+            const result = await categoryCollection.updateOne(query, updateDoc)
+            res.send(result)
+        })
+
+
+        //------------------Manage Cart-----------------
+        app.post('/carts', async (req, res) => {
+            const cartInfo = req.body;
+            const result = await cartsCollection.insertOne(cartInfo)
             res.send(result)
         })
 
