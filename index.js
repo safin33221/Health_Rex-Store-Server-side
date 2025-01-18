@@ -178,7 +178,8 @@ async function run() {
 
         //------------------Manage Cart-----------------
 
-        app.get('/carts',async(req,res)=>{
+        app.get('/carts/:email', async (req, res) => {
+            const email = req.params.email
             const result = await cartsCollection.find().toArray()
             res.send(result)
         })
@@ -186,6 +187,20 @@ async function run() {
             const cartInfo = req.body;
             const result = await cartsCollection.insertOne(cartInfo)
             res.send(result)
+        })
+        app.patch('/cart/quantity/:id', async (req, res) => {
+            const id = req.params.id
+            const status = req.body.status;
+            
+            const query = { _id: new ObjectId(id) }
+            const updatedoc = {
+                $inc: {
+                    quantity: status === 'increse' ? +1 : -1
+                }
+            }
+            const result = await cartsCollection.updateOne(query, updatedoc)
+            res.send(result)
+
         })
 
 
