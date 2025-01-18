@@ -180,7 +180,8 @@ async function run() {
 
         app.get('/carts/:email', async (req, res) => {
             const email = req.params.email
-            const result = await cartsCollection.find().toArray()
+            const query = { email: email }
+            const result = await cartsCollection.find(query).toArray()
             res.send(result)
         })
         app.post('/carts', async (req, res) => {
@@ -191,17 +192,34 @@ async function run() {
         app.patch('/cart/quantity/:id', async (req, res) => {
             const id = req.params.id
             const status = req.body.status;
-            
+            const pricePerUnit = req.body.price
+
             const query = { _id: new ObjectId(id) }
             const updatedoc = {
                 $inc: {
-                    quantity: status === 'increse' ? +1 : -1
+                    quantity: status === 'increse' ? +1 : -1,
+                    // pricePerUnit: status === 'increse' ? +pricePerUnit : -pricePerUnit
                 }
             }
             const result = await cartsCollection.updateOne(query, updatedoc)
             res.send(result)
 
         })
+        app.delete('/cart/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await cartsCollection.deleteOne(query)
+            res.send(result)
+        })
+        app.delete('/deletedAll/:email', async (req, res) => {
+            const currentEmail = req.params.email
+            const result = cartsCollection.deleteMany({ email: currentEmail })
+            res.send(result)
+        })
+
+
+        
+
 
 
 
