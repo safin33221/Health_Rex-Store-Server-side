@@ -88,13 +88,25 @@ async function run() {
 
 
 
-        //-------------------Manage Medicines------------------
+        //-------------------Manage Medicines------------------ 
         app.get('/medicines', async (req, res) => {
             const result = await medicinesCollection.find().toArray()
             res.send(result)
         })
-        //get medicines for seller
-        app.get('/seller/medicine/:email', async (req, res) => {
+        app.post('/invoice/medicine', async (req, res) => { 
+            const ids = req.body; 
+            console.log(ids);
+            const query = {
+                _id: {
+                    $in: ids.map(id => new ObjectId(id))
+                }
+            }
+            const result = await medicinesCollection.find(query).toArray()
+            res.send(result)
+
+        })
+        //get medicines for seller 
+        app.get('/seller/medicine/:email', async (req, res) => { 
             const email = req.params.email;
             const query = { email: email }
             const result = await medicinesCollection.find(query).toArray()
@@ -250,6 +262,17 @@ async function run() {
             const deleteResult = await cartsCollection.deleteMany(query)
             res.send({ result, deleteResult })
 
+        })
+        app.get('/payments/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { email: email }
+            const result = await paymentsCollection.find(query).toArray()
+            res.send(result)
+        })
+        app.get('/manage-payments', async (req, res) => {
+            
+            const result = await paymentsCollection.find().toArray()
+            res.send(result)
         })
 
 
