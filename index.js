@@ -39,6 +39,7 @@ async function run() {
         const AddsCollection = client.db('HealthRexStore').collection('adds')
         const categoryCollection = client.db('HealthRexStore').collection('category')
         const cartsCollection = client.db('HealthRexStore').collection('carts')
+        const paymentsCollection = client.db('HealthRexStore').collection('payments')
 
 
 
@@ -201,7 +202,7 @@ async function run() {
             const updatedoc = {
                 $inc: {
                     quantity: status === 'increse' ? +1 : -1,
-                    // pricePerUnit: status === 'increse' ? +pricePerUnit : -pricePerUnit
+
                 }
             }
             const result = await cartsCollection.updateOne(query, updatedoc)
@@ -237,6 +238,19 @@ async function run() {
             res.send({ clientSecret: paymentIntent.client_secret })
         })
 
+        //stored payments data
+        app.post('/payment', async (req, res) => {
+            const paymentInfo = req.body;
+            const result = await paymentsCollection.insertOne(paymentInfo)
+            const query = {
+                _id: {
+                    $in: paymentInfo.cartId.map(id => new ObjectId(id))
+                }
+            }
+            const deleteResult = await cartsCollection.deleteMany(query)
+            res.send({ result, deleteResult })
+
+        })
 
 
 
