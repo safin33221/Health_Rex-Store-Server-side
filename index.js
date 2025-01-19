@@ -95,7 +95,7 @@ async function run() {
         })
         app.post('/invoice/medicine', async (req, res) => { 
             const ids = req.body; 
-            console.log(ids);
+   
             const query = {
                 _id: {
                     $in: ids.map(id => new ObjectId(id))
@@ -273,6 +273,18 @@ async function run() {
             
             const result = await paymentsCollection.find().toArray()
             res.send(result)
+        })
+
+        app.patch('/payment/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    status: "paid"
+                }
+            }
+            const updateResult = await paymentsCollection.updateOne(filter, updateDoc)
+            res.send(updateResult)
         })
 
 
