@@ -86,7 +86,12 @@ async function run() {
             const query = { email: email }
 
             //find the user
+
+
             const result = await userCollection.findOne(query)
+ 
+
+
             res.send({ role: result?.role })
 
         })
@@ -98,6 +103,7 @@ async function run() {
             const result = await medicinesCollection.find().toArray()
             res.send(result)
         })
+
         app.post('/invoice/medicine', async (req, res) => {
             const ids = req.body;
 
@@ -296,7 +302,7 @@ async function run() {
         app.get('/sales-reports', async (req, res) => {
             const result = await paymentsCollection.aggregate([
                 {
-                    $unwind: '$medicineId' 
+                    $unwind: '$medicineId'
                 },
                 {
                     $set: {
@@ -321,6 +327,61 @@ async function run() {
                 //         revenue: { $sum: '$totalPrice' }
                 //     }
                 // }
+
+            ]).toArray()
+
+            res.send(result)
+        })
+
+
+        app.get('/payments-history/:email', async (req, res) => {
+            const email = req.params.email
+            const result = await paymentsCollection.aggregate([
+                {
+                    $unwind: '$medicineId'
+                },
+                {
+                    $set: {
+                        medicineId: { $toObjectId: '$medicineId' } // Convert to ObjectId
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'medicines',
+                        localField: 'medicineId',
+                        foreignField: '_id',
+                        as: 'salesInfo',
+                    }
+                },
+                {
+                    $unwind: '$salesInfo'
+                },
+                {
+                    $match: {
+                        'salesInfo.email': email // Filter by email dynamically
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$transtionId',
+                        email: { $first: '$email' },
+                        status: { $first: '$status' },  
+                        sellerEamil: { $first: '$salesInfo.email' }
+
+
+                    }
+                },{
+                    $project:{
+                        _id:0,
+                        transtionId:'$_id',
+                        email: 1,
+                        status: 1,  
+                        sellerEamil: 1
+
+                    }
+                }
+
+
 
             ]).toArray()
 
