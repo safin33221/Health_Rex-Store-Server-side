@@ -55,6 +55,11 @@ async function run() {
         //Stored user in usersCollection
         app.post('/users', async (req, res) => {
             const userInfo = req.body;
+            const query = { email: userInfo?.email }
+            const existingUser = await userCollection.findOne(query)
+            if (existingUser) {
+                return res.send({ message: 'user already added in data base', insertedId: null })
+            }
             const result = await userCollection.insertOne(userInfo)
             res.send({ result })
         })
@@ -93,9 +98,9 @@ async function run() {
             const result = await medicinesCollection.find().toArray()
             res.send(result)
         })
-        app.post('/invoice/medicine', async (req, res) => { 
-            const ids = req.body; 
-   
+        app.post('/invoice/medicine', async (req, res) => {
+            const ids = req.body;
+
             const query = {
                 _id: {
                     $in: ids.map(id => new ObjectId(id))
@@ -106,7 +111,7 @@ async function run() {
 
         })
         //get medicines for seller 
-        app.get('/seller/medicine/:email', async (req, res) => { 
+        app.get('/seller/medicine/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
             const result = await medicinesCollection.find(query).toArray()
@@ -270,7 +275,7 @@ async function run() {
             res.send(result)
         })
         app.get('/manage-payments', async (req, res) => {
-            
+
             const result = await paymentsCollection.find().toArray()
             res.send(result)
         })
@@ -285,6 +290,41 @@ async function run() {
             }
             const updateResult = await paymentsCollection.updateOne(filter, updateDoc)
             res.send(updateResult)
+        })
+
+        //payments aggrigate
+        app.get('/sales-reports', async (req, res) => {
+            const result = await paymentsCollection.aggregate([
+                {
+                    $unwind: '$medicineId' 
+                },
+                {
+                    $set: {
+                        medicineId: { $toObjectId: '$medicineId' } // Convert to ObjectId
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'medicines',
+                        localField: 'medicineId',
+                        foreignField: '_id',
+                        as: 'salesInfo',
+                    }
+                },
+                {
+                    $unwind: '$salesInfo'
+                },
+                // {
+                //     $group: {
+                //         _id: '$salesInfo.itemName',
+                //         quantity: { $sum: 1 },
+                //         revenue: { $sum: '$totalPrice' }
+                //     }
+                // }
+
+            ]).toArray()
+
+            res.send(result)
         })
 
 
