@@ -1,9 +1,11 @@
 const express = require('express');
 const app = express()
 require('dotenv').config()
+const jwt = require('jsonwebtoken')
 const cors = require('cors');
 const port = process.env.PORT || 8080
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+
 
 
 //middleware
@@ -30,7 +32,8 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        // await client.connect();
+        // await client.connect(); xls
+
 
 
         //--------------------All Collection -------------------
@@ -41,19 +44,48 @@ async function run() {
         const cartsCollection = client.db('HealthRexStore').collection('carts')
         const paymentsCollection = client.db('HealthRexStore').collection('payments')
 
+        const verfifyToken = async (req, res, next) => {
+            // console.log(req.headers.authorization);
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: 'forbidden access' })
+            }
+            const token = req?.headers?.authorization.split(' ')[1]
+         
+            jwt.verify(token, process.env.JSON_SECRET_TOKEN, (err, decoded) => {
+                if (err) {
+                    return res.status(401).send({ message: 'unauthorized access' })
+                }
+                req.decoded = decoded
+                next() 
+            })
+
+           
+
+
+
+        }
+
+        //1st Create Json token
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.JSON_SECRET_TOKEN, { expiresIn: '2h' })
+            res.send({ token })
+        })
+
 
 
 
 
         //------------------Manage user------------------
         //get user from userCollection 
-        app.get('/users', async (req, res) => {
+        app.get('/users', verfifyToken, async (req, res) => {
             const result = await userCollection.find().toArray()
             res.send(result)
         })
 
         //Stored user in usersCollection
         app.post('/users', async (req, res) => {
+            console.log(req.headers)
             const userInfo = req.body;
             const query = { email: userInfo?.email }
             const existingUser = await userCollection.findOne(query)
@@ -430,7 +462,7 @@ async function run() {
 
             res.send(result)
         })
-        app.get('/admin/sales-states', async (req, res) => { 
+        app.get('/admin/sales-states', async (req, res) => {
             const email = req.params.email
             const result = await paymentsCollection.aggregate([
                 {
