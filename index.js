@@ -50,18 +50,24 @@ async function run() {
                 return res.status(401).send({ message: 'forbidden access' })
             }
             const token = req?.headers?.authorization.split(' ')[1]
-         
+
             jwt.verify(token, process.env.JSON_SECRET_TOKEN, (err, decoded) => {
                 if (err) {
                     return res.status(401).send({ message: 'unauthorized access' })
                 }
                 req.decoded = decoded
-                next() 
+                next()
             })
+        }
 
-           
-
-
+        const verfifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await userCollection.findOne(query)
+            const isAdmin = user?.role === 'admin'
+            if (!isAdmin) {
+                return res.status(403).send({ message: 'forbidden Access! Admin ony actions!' })
+            }
 
         }
 
