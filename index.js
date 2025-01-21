@@ -68,6 +68,7 @@ async function run() {
             if (!isAdmin) {
                 return res.status(403).send({ message: 'forbidden Access! Admin ony actions!' })
             }
+            next()
 
         }
         const verfifySeller = async (req, res, next) => {
@@ -77,8 +78,8 @@ async function run() {
             const isSeller = user?.role === 'seller'
             if (!isSeller) {
                 return res.status(403).send({ message: 'forbidden Access! Admin ony actions!' })
-            } 
-
+            }
+            next()
         }
 
         //1st Create Json token
@@ -94,7 +95,7 @@ async function run() {
 
         //------------------Manage user------------------
         //get user from userCollection 
-        app.get('/users', verfifyToken, async (req, res) => {
+        app.get('/users', verfifyToken, verfifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray()
             res.send(result)
         })
@@ -111,7 +112,7 @@ async function run() {
             const result = await userCollection.insertOne(userInfo)
             res.send({ result })
         })
-        app.patch('/user/role/:email', async (req, res) => {
+        app.patch('/user/role/:email', verfifyToken, verfifyAdmin, async (req, res) => {
             const email = req.params.email;
             const data = req.body;
             const query = { email: email }
@@ -129,7 +130,7 @@ async function run() {
 
 
         //-----------------Manage User Role -----------------
-        app.get('/user/role/:email', async (req, res) => {
+        app.get('/user/role/:email', verfifyToken, async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
 
@@ -152,7 +153,7 @@ async function run() {
             res.send(result)
         })
 
-        app.post('/invoice/medicine', async (req, res) => {
+        app.post('/invoice/medicine', verfifyToken, async (req, res) => {
             const ids = req.body;
 
             const query = {
@@ -165,14 +166,14 @@ async function run() {
 
         })
         //get medicines for seller 
-        app.get('/seller/medicine/:email', async (req, res) => {
+        app.get('/seller/medicine/:email', verfifyToken, verfifySeller, async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
             const result = await medicinesCollection.find(query).toArray()
             res.send(result)
         })
         //Add medicines by seller
-        app.post('/medicines', async (req, res) => {
+        app.post('/medicines', verfifyToken, verfifySeller, async (req, res) => {
             const medicineInfo = req.body;
             const result = await medicinesCollection.insertOne(medicineInfo)
             res.send(result)
@@ -181,12 +182,12 @@ async function run() {
 
 
         //-----------------------Manage Adverticement-------------------
-        app.post('/askAddverticement', async (req, res) => {
+        app.post('/askAddverticement', verfifyToken, verfifySeller, async (req, res) => {
             const addInfo = req.body;
             const result = await AddsCollection.insertOne(addInfo)
             res.send(result)
         })
-        app.get('/addvertisements', async (req, res) => {
+        app.get('/addvertisements', verfifyToken, async (req, res) => {
             const result = await AddsCollection.find().toArray()
             res.send(result)
         })
@@ -195,14 +196,14 @@ async function run() {
             res.send(result)
         })
         //get banner for login sellse
-        app.get('/seller/adds/:email', async (req, res) => {
+        app.get('/seller/adds/:email', verfifyToken, verfifySeller, async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
             const result = await AddsCollection.find(query).toArray()
             res.send(result)
         })
 
-        app.patch('/askAddverticement/status', async (req, res) => {
+        app.patch('/askAddverticement/status', verfifyToken, verfifyAdmin, async (req, res) => {
 
             const id = req.body.data._id;
             const status = req.body.status;
@@ -224,19 +225,19 @@ async function run() {
             res.send(result)
         })
 
-        app.post('/category', async (req, res) => {
+        app.post('/category', verfifyToken, verfifyAdmin, async (req, res) => {
             const categoryInfo = req.body;
             const result = await categoryCollection.insertOne(categoryInfo)
             res.send(result)
         })
 
-        app.delete('/category/:id', async (req, res) => {
+        app.delete('/category/:id', verfifyToken, verfifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await categoryCollection.deleteOne(query)
             res.send(result)
         })
-        app.patch('/category/:id', async (req, res) => {
+        app.patch('/category/:id', verfifyToken, verfifyAdmin, async (req, res) => {
             const id = req.params.id
             const data = req.body;
             const query = { _id: new ObjectId(id) }
@@ -259,12 +260,12 @@ async function run() {
             const result = await cartsCollection.find(query).toArray()
             res.send(result)
         })
-        app.post('/carts', async (req, res) => {
+        app.post('/carts', verfifyToken, async (req, res) => {
             const cartInfo = req.body;
             const result = await cartsCollection.insertOne(cartInfo)
             res.send(result)
         })
-        app.patch('/cart/quantity/:id', async (req, res) => {
+        app.patch('/cart/quantity/:id', verfifyToken, async (req, res) => {
             const id = req.params.id
             const status = req.body.status;
             const pricePerUnit = req.body.price
@@ -280,13 +281,13 @@ async function run() {
             res.send(result)
 
         })
-        app.delete('/cart/:id', async (req, res) => {
+        app.delete('/cart/:id', verfifyToken, async (req, res) => {
             const id = req.params.id
             const query = { _id: new ObjectId(id) }
             const result = await cartsCollection.deleteOne(query)
             res.send(result)
         })
-        app.delete('/deletedAll/:email', async (req, res) => {
+        app.delete('/deletedAll/:email', verfifyToken, async (req, res) => {
             const currentEmail = req.params.email
             const result = cartsCollection.deleteMany({ email: currentEmail })
             res.send(result)
@@ -294,7 +295,7 @@ async function run() {
 
 
         //------------------------manage payments systems ---------------------
-        app.post('/create-payment-intent', async (req, res) => {
+        app.post('/create-payment-intent', verfifyToken, async (req, res) => {
             const { price } = req.body
             const amount = parseInt(price * 100)
 
@@ -310,7 +311,7 @@ async function run() {
         })
 
         //stored payments data
-        app.post('/payment', async (req, res) => {
+        app.post('/payment', verfifyToken, async (req, res) => {
             const paymentInfo = req.body;
             const result = await paymentsCollection.insertOne(paymentInfo)
             const query = {
@@ -322,19 +323,19 @@ async function run() {
             res.send({ result, deleteResult })
 
         })
-        app.get('/payments/:email', async (req, res) => {
+        app.get('/payments/:email', verfifyToken, async (req, res) => {
             const email = req.params.email
             const query = { email: email }
             const result = await paymentsCollection.find(query).toArray()
             res.send(result)
         })
-        app.get('/manage-payments', async (req, res) => {
+        app.get('/manage-payments', verfifyToken, verfifyAdmin, async (req, res) => {
 
             const result = await paymentsCollection.find().toArray()
             res.send(result)
         })
 
-        app.patch('/payment/:id', async (req, res) => {
+        app.patch('/payment/:id', verfifyToken, verfifyAdmin, async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
             const updateDoc = {
@@ -347,7 +348,7 @@ async function run() {
         })
 
         //payments aggrigate
-        app.get('/sales-reports', async (req, res) => {
+        app.get('/sales-reports', verfifyToken, verfifyAdmin, async (req, res) => {
             const result = await paymentsCollection.aggregate([
                 {
                     $unwind: '$medicineId'
