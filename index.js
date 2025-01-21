@@ -70,6 +70,16 @@ async function run() {
             }
 
         }
+        const verfifySeller = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await userCollection.findOne(query)
+            const isSeller = user?.role === 'seller'
+            if (!isSeller) {
+                return res.status(403).send({ message: 'forbidden Access! Admin ony actions!' })
+            } 
+
+        }
 
         //1st Create Json token
         app.post('/jwt', async (req, res) => {
