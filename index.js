@@ -430,6 +430,40 @@ async function run() {
 
             res.send(result)
         })
+        app.get('/admin/sales-states', async (req, res) => { 
+            const email = req.params.email
+            const result = await paymentsCollection.aggregate([
+                {
+                    $unwind: '$medicineId'
+                },
+                {
+                    $set: {
+                        medicineId: { $toObjectId: '$medicineId' } // Convert to ObjectId
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'medicines',
+                        localField: 'medicineId',
+                        foreignField: '_id',
+                        as: 'salesInfo',
+                    }
+                },
+                {
+                    $unwind: '$salesInfo'
+                },
+                {
+                    $group: {
+                        _id: '$status',
+                        quantity: { $sum: 1 },
+                        revenue: { $sum: '$totalPrice' }
+                    }
+                }
+
+            ]).toArray()
+
+            res.send(result)
+        })
 
 
 
