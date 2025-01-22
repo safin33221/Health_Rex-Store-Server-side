@@ -224,6 +224,39 @@ async function run() {
             const result = await categoryCollection.find().toArray()
             res.send(result)
         })
+        app.get('/categoryDetails', async (req, res) => {
+            const result = await medicinesCollection.aggregate([
+                {
+                    $group: {
+                        _id: '$category',
+                        count: { $sum: 1 }
+                    }
+
+                },
+                {
+                    $lookup: {
+                        from: "category",
+                        localField: "_id",
+                        foreignField: "name",
+                        as: "categoryDetails"
+                    }
+
+                },
+                {
+
+                    $unwind: "$categoryDetails"
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        category: '$_id',
+                        image: "$categoryDetails.image",
+                        count: 1
+                    }
+                }
+            ]).toArray()
+            res.send(result)
+        })
 
         app.post('/category', verfifyToken, verfifyAdmin, async (req, res) => {
             const categoryInfo = req.body;
