@@ -231,6 +231,11 @@ async function run() {
             const result = await categoryCollection.find().toArray()
             res.send(result)
         })
+        app.get('/categories/:category', async (req, res) => {
+            const { category } = req.params
+            const result = await medicinesCollection.find({ category: category }).toArray()
+            res.send(result)
+        })
         app.get('/categoryDetails', async (req, res) => {
             const result = await medicinesCollection.aggregate([
                 {
