@@ -152,7 +152,10 @@ async function run() {
             const result = await medicinesCollection.find().toArray()
             res.send(result)
         })
-
+        app.get('/discount-products', async (req, res) => {
+            const result = await medicinesCollection.find({ discountPercentage: { $gt: "0" } }).toArray()
+            res.send(result)
+        })
         app.post('/invoice/medicine', verfifyToken, async (req, res) => {
             const ids = req.body;
 
@@ -307,6 +310,13 @@ async function run() {
         })
         app.post('/carts', verfifyToken, async (req, res) => {
             const cartInfo = req.body;
+            const email = cartInfo.email
+            itemName = cartInfo.itemName
+            const query = { email: email, itemName: itemName }
+            const alreadyAdded = await cartsCollection.findOne(query)
+            if (alreadyAdded) {
+                return res.send({ message: 'This medicine is already in your cart.' })
+            }
             const result = await cartsCollection.insertOne(cartInfo)
             res.send(result)
         })
@@ -525,14 +535,14 @@ async function run() {
             res.send(result)
         })
         app.get('/admin/sales-states', async (req, res) => {
-            const email = req.params.email
+
             const result = await paymentsCollection.aggregate([
                 {
                     $unwind: '$medicineId'
                 },
                 {
                     $set: {
-                        medicineId: { $toObjectId: '$medicineId' } // Convert to ObjectId
+                        medicineId: { $toObjectId: '$medicineId' }
                     }
                 },
                 {
