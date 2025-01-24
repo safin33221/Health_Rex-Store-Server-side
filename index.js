@@ -150,6 +150,10 @@ async function run() {
         //-------------------Manage Medicines------------------ 
         app.get('/medicines', async (req, res) => {
             const search = req?.query?.search || ''
+            const sort = req?.query?.sort || 'ascending'
+      
+            const sortOrder = sort === 'ascending' ? 1 : -1 
+
 
             let query = {
                 $or: [
@@ -174,7 +178,7 @@ async function run() {
                 ]
             }
 
-            const result = await medicinesCollection.find(query).toArray()
+            const result = await medicinesCollection.find(query).sort({ pricePerUnit: sortOrder }).toArray()
             res.send(result)
         })
         app.get('/discount-products', async (req, res) => {
@@ -189,7 +193,7 @@ async function run() {
                     $in: ids.map(id => new ObjectId(id))
                 }
             }
-            const result = await medicinesCollection.find(query).toArray()
+            const result = await (await medicinesCollection.find(query).toArray()).sort()
             res.send(result)
 
         })
