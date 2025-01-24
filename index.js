@@ -149,7 +149,32 @@ async function run() {
 
         //-------------------Manage Medicines------------------ 
         app.get('/medicines', async (req, res) => {
-            const result = await medicinesCollection.find().toArray()
+            const search = req?.query?.search || ''
+
+            let query = {
+                $or: [
+                    {
+                        itemName: {
+                            $regex: search,
+                            $options: 'i'
+                        }
+                    },
+                    {
+                        genericName: {
+                            $regex: search,
+                            $options: 'i'
+                        }
+                    },
+                    {
+                        company: {
+                            $regex: search,
+                            $options: 'i'
+                        }
+                    }
+                ]
+            }
+
+            const result = await medicinesCollection.find(query).toArray()
             res.send(result)
         })
         app.get('/discount-products', async (req, res) => {
@@ -171,7 +196,30 @@ async function run() {
         //get medicines for seller 
         app.get('/seller/medicine/:email', verfifyToken, verfifySeller, async (req, res) => {
             const email = req.params.email;
-            const query = { email: email }
+            const search = req?.query?.search || ''
+            let query = {
+                $and: [
+                    { email: email },
+                    {
+                        $or: [
+                            {
+                                itemName: {
+                                    $regex: search,
+                                    $options: 'i'
+                                }
+                            },
+
+                            {
+                                company: {
+                                    $regex: search,
+                                    $options: 'i'
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+
             const result = await medicinesCollection.find(query).toArray()
             res.send(result)
         })
@@ -235,8 +283,38 @@ async function run() {
             res.send(result)
         })
         app.get('/categories/:category', async (req, res) => {
+            const search = req?.query?.search || ''
+            console.log(search);
             const { category } = req.params
-            const result = await medicinesCollection.find({ category: category }).toArray()
+            let query = {
+                $and: [
+                    { category: category },
+                    {
+                        $or: [
+                            {
+                                itemName: {
+                                    $regex: search,
+                                    $options: 'i'
+                                }
+                            },
+                            {
+                                genericName: {
+                                    $regex: search,
+                                    $options: 'i'
+                                }
+                            },
+                            {
+                                company: {
+                                    $regex: search,
+                                    $options: 'i'
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+
+            const result = await medicinesCollection.find(query).toArray()
             res.send(result)
         })
         app.get('/categoryDetails', async (req, res) => {
@@ -302,9 +380,34 @@ async function run() {
 
         //------------------Manage Cart-----------------
 
-        app.get('/carts/:email', async (req, res) => {
+        app.get('/carts/:email', verfifyToken, async (req, res) => {
+            const search = req?.query?.search || ''
+
             const email = req.params.email
-            const query = { email: email }
+
+
+            let query = {
+                $and: [
+                    { email: email },
+                    {
+                        $or: [
+                            {
+                                itemName: {
+                                    $regex: search,
+                                    $options: 'i'
+                                }
+                            },
+
+                            {
+                                company: {
+                                    $regex: search,
+                                    $options: 'i'
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
             const result = await cartsCollection.find(query).toArray()
             res.send(result)
         })
@@ -402,6 +505,8 @@ async function run() {
             res.send(updateResult)
         })
 
+
+        // -------------------Mange Sales Reports---------------------
         //payments aggrigate
         app.get('/sales-reports', verfifyToken, verfifyAdmin, async (req, res) => {
             const result = await paymentsCollection.aggregate([
@@ -424,13 +529,7 @@ async function run() {
                 {
                     $unwind: '$salesInfo'
                 },
-                // {
-                //     $group: {
-                //         _id: '$salesInfo.itemName',
-                //         quantity: { $sum: 1 },
-                //         revenue: { $sum: '$totalPrice' }
-                //     }
-                // }
+
 
             ]).toArray()
 
