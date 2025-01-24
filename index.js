@@ -43,6 +43,7 @@ async function run() {
         const categoryCollection = client.db('HealthRexStore').collection('category')
         const cartsCollection = client.db('HealthRexStore').collection('carts')
         const paymentsCollection = client.db('HealthRexStore').collection('payments')
+        const customerTestimonialsCollection = client.db('HealthRexStore').collection('customerTestimonials')
 
         const verfifyToken = async (req, res, next) => {
             // console.log(req.headers.authorization);
@@ -144,15 +145,19 @@ async function run() {
             res.send({ role: result?.role })
 
         })
-
+        //------------------Manage Customer teastomonial------------
+        app.get('/customerTestimonials', async (req, res) => {
+            const result = await customerTestimonialsCollection.find().toArray()
+            res.send(result)
+        })
 
 
         //-------------------Manage Medicines------------------ 
         app.get('/medicines', async (req, res) => {
             const search = req?.query?.search || ''
             const sort = req?.query?.sort || 'ascending'
-      
-            const sortOrder = sort === 'ascending' ? 1 : -1 
+
+            const sortOrder = sort === 'ascending' ? 1 : -1
 
 
             let query = {
@@ -201,6 +206,8 @@ async function run() {
         app.get('/seller/medicine/:email', verfifyToken, verfifySeller, async (req, res) => {
             const email = req.params.email;
             const search = req?.query?.search || ''
+            const sort = req?.query?.sort || 'ascending'
+            const sortOrder = sort === 'ascending' ? 1 : -1
             let query = {
                 $and: [
                     { email: email },
@@ -224,7 +231,7 @@ async function run() {
                 ]
             }
 
-            const result = await medicinesCollection.find(query).toArray()
+            const result = await medicinesCollection.find(query).sort({ pricePerUnit: sortOrder }).toArray()
             res.send(result)
         })
         //Add medicines by seller
@@ -288,6 +295,8 @@ async function run() {
         })
         app.get('/categories/:category', async (req, res) => {
             const search = req?.query?.search || ''
+            const sort = req?.query?.sort || 'ascending'
+            const sortOrder = sort === 'ascending' ? 1 : -1
             console.log(search);
             const { category } = req.params
             let query = {
@@ -318,7 +327,7 @@ async function run() {
                 ]
             }
 
-            const result = await medicinesCollection.find(query).toArray()
+            const result = await medicinesCollection.find(query).sort({ pricePerUnit: sortOrder }).toArray()
             res.send(result)
         })
         app.get('/categoryDetails', async (req, res) => {
