@@ -44,6 +44,7 @@ async function run() {
         const cartsCollection = client.db('HealthRexStore').collection('carts')
         const paymentsCollection = client.db('HealthRexStore').collection('payments')
         const customerTestimonialsCollection = client.db('HealthRexStore').collection('customerTestimonials')
+        const fqaCollection = client.db('HealthRexStore').collection('fqa')
 
         const verfifyToken = async (req, res, next) => {
             // console.log(req.headers.authorization);
@@ -152,14 +153,22 @@ async function run() {
             const result = await customerTestimonialsCollection.find().toArray()
             res.send(result)
         })
+        //-------------------Mange Fqa--------------------
+        app.get('/fqa', async (req, res) => {
+            const result = await fqaCollection.find().toArray()
+            res.send(result)
+        })
 
 
         //-------------------Manage Medicines------------------ 
         app.get('/medicines', async (req, res) => {
             const search = req?.query?.search || ''
             const sort = req?.query?.sort || 'ascending'
+            const page = parseInt(req?.query?.page)
+            const size = parseInt(req?.query?.size) || 5
+            console.log(page, size);
 
-            const sortOrder = sort === 'ascending' ? 1 : -1 
+            const sortOrder = sort === 'ascending' ? 1 : -1
 
 
             let query = {
@@ -185,9 +194,14 @@ async function run() {
                 ]
             }
 
-            const result = await medicinesCollection.find(query).sort({ pricePerUnit: sortOrder }).toArray()
+            const result = await medicinesCollection.find(query).sort({ pricePerUnit: sortOrder }).skip(page * size).limit(size).toArray()
             res.send(result)
         })
+        app.get('/medicineCounts', async (req, res) => {
+            const count = await medicinesCollection.estimatedDocumentCount()
+            res.send({ count })
+        })
+
         app.get('/discount-products', async (req, res) => {
             const result = await medicinesCollection.find({ discountPercentage: { $gt: "0" } }).toArray()
             res.send(result)
@@ -195,7 +209,7 @@ async function run() {
         app.get('/invoice/details/:transtionId', async (req, res) => {
             const transtionId = req?.params?.transtionId
             console.log(transtionId);
-           
+
             const result = await paymentsCollection.aggregate([
                 { $match: { 'transtionId': transtionId } },
                 {
@@ -215,8 +229,8 @@ async function run() {
                     }
                 },
                 {
-                    $unwind: { 
-                        path: '$cartDetails', 
+                    $unwind: {
+                        path: '$cartDetails',
                         preserveNullAndEmptyArrays: true // Preserve data if no match is found  
                     }
                 },
@@ -230,6 +244,8 @@ async function run() {
             const search = req?.query?.search || ''
             const sort = req?.query?.sort || 'ascending'
             const sortOrder = sort === 'ascending' ? 1 : -1
+            const page = parseInt(req?.query?.page)
+            const size = parseInt(req?.query?.size) || 5
             let query = {
                 $and: [
                     { email: email },
@@ -253,8 +269,14 @@ async function run() {
                 ]
             }
 
-            const result = await medicinesCollection.find(query).sort({ pricePerUnit: sortOrder }).toArray()
+            const result = await medicinesCollection.find(query).sort({ pricePerUnit: sortOrder }).skip(page * size).limit(size).toArray()
             res.send(result)
+        })
+
+        app.get('/sellers/medicine-counts/:email', async (req, res) => {
+            const email = req.params.email
+            const count = await medicinesCollection.countDocuments({ email: email });
+            res.send({ count })
         })
         //Add medicines by seller
         app.post('/medicines', verfifyToken, verfifySeller, async (req, res) => {
