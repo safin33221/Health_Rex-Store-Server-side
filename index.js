@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken')
 const cors = require('cors');
 const port = process.env.PORT || 8080
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+const { default: Stripe } = require('stripe');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 
@@ -16,8 +18,6 @@ app.use(express.json())
 
 
 
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const { default: Stripe } = require('stripe');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.blz8y.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -51,6 +51,7 @@ async function run() {
                 return res.status(401).send({ message: 'forbidden access' })
             }
             const token = req?.headers?.authorization.split(' ')[1]
+
 
             jwt.verify(token, process.env.JSON_SECRET_TOKEN, (err, decoded) => {
                 if (err) {
@@ -87,6 +88,7 @@ async function run() {
         app.post('/jwt', async (req, res) => {
             const user = req.body;
             const token = jwt.sign(user, process.env.JSON_SECRET_TOKEN, { expiresIn: '2h' })
+
             res.send({ token })
         })
 
@@ -131,7 +133,7 @@ async function run() {
 
 
         //-----------------Manage User Role -----------------
-        app.get('/user/role/:email', verfifyToken, async (req, res) => {
+        app.get('/user/role/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
 
@@ -157,7 +159,7 @@ async function run() {
             const search = req?.query?.search || ''
             const sort = req?.query?.sort || 'ascending'
 
-            const sortOrder = sort === 'ascending' ? 1 : -1
+            const sortOrder = sort === 'ascending' ? 1 : -1 
 
 
             let query = {
@@ -190,15 +192,35 @@ async function run() {
             const result = await medicinesCollection.find({ discountPercentage: { $gt: "0" } }).toArray()
             res.send(result)
         })
-        app.post('/invoice/medicine', verfifyToken, async (req, res) => {
-            const ids = req.body;
-
-            const query = {
-                _id: {
-                    $in: ids.map(id => new ObjectId(id))
-                }
-            }
-            const result = await (await medicinesCollection.find(query).toArray()).sort()
+        app.get('/invoice/details/:transtionId', async (req, res) => {
+            const transtionId = req?.params?.transtionId
+            console.log(transtionId);
+           
+            const result = await paymentsCollection.aggregate([
+                { $match: { 'transtionId': transtionId } },
+                {
+                    $unwind: '$medicineId'
+                },
+                {
+                    $set: {
+                        medicineId: { $toObjectId: '$medicineId' } // Convert to ObjectId
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'medicines',
+                        localField: 'medicineId',
+                        foreignField: '_id',
+                        as: 'cartDetails',
+                    }
+                },
+                {
+                    $unwind: { 
+                        path: '$cartDetails', 
+                        preserveNullAndEmptyArrays: true // Preserve data if no match is found  
+                    }
+                },
+            ]).toArray()
             res.send(result)
 
         })
@@ -695,7 +717,7 @@ run().catch(console.dir);
 
 
 app.get('/', async (req, res) => {
-    res.send("server running on without error ")
+    res.send("server running  without error ")
 })
 app.listen(port, () => {
     console.log("server running on :", port);
